@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Simulasi TPT — Reklasifikasi Kelompok Potensi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#14171A; --panel:#1D2124; --panel-2:#23282C; --line:#33393E;
+    --text:#E7E5E0; --muted:#9BA1A6;
+    --kota:#4FA8B5; --desa:#C98A4B;
+    --laki:#7C9BC9; --perempuan:#C97CA6;
+    --alert:#D6524A; --ok:#6FBF8B;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--text); font-family:'IBM Plex Sans', sans-serif; padding:32px 20px 60px;}
+  .wrap{max-width:1040px;margin:0 auto;}
+  .eyebrow{font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:6px;}
+  h1{font-size:26px; margin:0 0 4px; font-weight:600; letter-spacing:-.01em;}
+  .subtitle{color:var(--muted); font-size:14px; margin-bottom:20px; line-height:1.5; max-width:680px;}
+  .banner{background:#2A2018; border:1px solid #4A3A28; color:#E8C99A; font-size:12.5px; padding:10px 14px; border-radius:6px; margin-bottom:24px; font-family:'IBM Plex Mono',monospace;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:22px 24px; margin-bottom:20px;}
+  .panel-title{font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); font-family:'IBM Plex Mono',monospace; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;}
+  .controls-row{display:flex; gap:28px; flex-wrap:wrap; align-items:flex-end;}
+  .control{flex:1; min-width:220px;}
+  label{display:block; font-size:12.5px; color:var(--muted); margin-bottom:6px;}
+  input[type=number]{width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 10px; border-radius:6px; font-family:'IBM Plex Mono',monospace; font-size:15px;}
+  input[type=range]{width:100%; accent-color:var(--kota);}
+  button{background:var(--kota); color:#0D1416; border:none; padding:10px 18px; border-radius:6px; font-weight:600; font-size:13.5px; cursor:pointer; font-family:'IBM Plex Sans',sans-serif; white-space:nowrap;}
+  button:hover{filter:brightness(1.1);}
+  .slider-value{font-family:'IBM Plex Mono',monospace; font-size:22px; font-weight:600; margin-top:2px;}
+  .slider-sub{font-size:12px; color:var(--muted); margin-top:2px;}
+
+  .tabs{display:flex; gap:6px;}
+  .tab{
+    font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em;
+    padding:5px 10px; border-radius:5px; cursor:pointer; color:var(--muted); border:1px solid var(--line); background:transparent;
+  }
+  .tab.active{background:var(--panel-2); color:var(--text); border-color:var(--muted);}
+
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:6px;}
+  @media (max-width:760px){.grid3{grid-template-columns:1fr;}}
+  .card{background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:16px 18px;}
+  .card.kota{border-top:3px solid var(--kota);}
+  .card.desa{border-top:3px solid var(--desa);}
+  .card.laki{border-top:3px solid var(--laki);}
+  .card.perempuan{border-top:3px solid var(--perempuan);}
+  .card.nas{border-top:3px solid var(--text);}
+  .card-label{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;}
+  .tpt-row{display:flex; justify-content:space-between; align-items:baseline; margin-top:12px;}
+  .tpt-num{font-family:'IBM Plex Mono',monospace; font-size:28px; font-weight:700;}
+  .tpt-arrow{font-size:13px; color:var(--muted); margin:0 6px;}
+  .tpt-before{font-family:'IBM Plex Mono',monospace; font-size:15px; color:var(--muted);}
+  .delta{font-size:12px; margin-top:6px; font-family:'IBM Plex Mono',monospace;}
+  .delta.up{color:var(--alert);}
+
+  table{width:100%; border-collapse:collapse; margin-top:10px; font-size:13px;}
+  th,td{text-align:left; padding:7px 10px; border-bottom:1px solid var(--line);}
+  th{color:var(--muted); font-weight:500; font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.06em;}
+  td.num{font-family:'IBM Plex Mono',monospace; text-align:right;}
+  tr.group td{padding-top:14px; color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:.06em; font-family:'IBM Plex Mono',monospace; border-bottom:none;}
+
+  .pool-bar{height:10px; border-radius:5px; overflow:hidden; display:flex; margin-top:8px; background:var(--panel-2); border:1px solid var(--line);}
+  .pool-bar div{height:100%;}
+  .legend{display:flex; gap:16px; margin-top:8px; flex-wrap:wrap; font-size:12px; color:var(--muted);}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:6px;}
+  .meta-line{font-size:11.5px; color:var(--muted); margin-top:10px; border-top:1px dashed var(--line); padding-top:10px; font-family:'IBM Plex Mono',monospace;}
+  .footnote{font-size:11.5px; color:var(--muted); line-height:1.6; margin-top:26px;}
+  select.selectbox{width:100%; background:var(--panel-2); border:1px solid var(--line); color:var(--text); padding:9px 10px; border-radius:6px; font-family:'IBM Plex Sans',sans-serif; font-size:13.5px;}
+  #poolListBody tr:hover{background:var(--panel-2);}
+  #poolListBody td{font-family:'IBM Plex Mono',monospace; font-size:12.5px;}
+  #poolListBody input[type=checkbox]{width:15px; height:15px; accent-color:var(--kota);}
+  #previewTable th, #previewTable td{font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">SAKERNAS · SIMULASI · TIDAK UNTUK PELAPORAN RESMI</div>
+  <h1>Simulasi TPT — Reklasifikasi Kelompok "Potensi"</h1>
+  <div class="subtitle">
+    Menggeser sebagian anggota rumah tangga yang saat ini tidak bekerja dan beralasan
+    tidak mencari kerja karena <b>tidak mampu melakukan pekerjaan (kode 7)</b> atau
+    <b>alasan lain (kode 8)</b> pada R.20.4 (SRH_ALSN), menjadi berstatus
+    <b>Pengangguran</b>. TPT dihitung dengan bobot sampel (weightR).
+  </div>
+
+  <div class="banner">
+    ⚠ Ini adalah simulasi hipotetis untuk latihan/analisis sensitivitas, bukan perubahan pada data lapangan asli.
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Kendali simulasi</div>
+    <div class="controls-row">
+      <div class="control" style="flex:1.4;">
+        <label>Jumlah orang dari kelompok "potensi" (dari total <span id="poolTotal"></span> tersedia) yang direklasifikasi menjadi Pengangguran</label>
+        <input type="range" id="slider" min="0" max="221" value="0" step="1">
+        <div class="slider-value"><span id="sliderVal">0</span> orang</div>
+        <div class="slider-sub" id="sliderSub"></div>
+      </div>
+      <div class="control">
+        <label>Atau, cari otomatis untuk target TPT nasional (%)</label>
+        <input type="number" id="targetInput" step="0.01" value="1.5">
+      </div>
+      <div class="control" style="flex:0 0 auto;">
+        <button id="autoBtn">Cari jumlah orang</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <span>TPT setelah simulasi (tertimbang, weightR)</span>
+      <div class="tabs">
+        <div class="tab active" data-view="wilayah">Kota / Desa</div>
+        <div class="tab" data-view="gender">Laki-laki / Perempuan</div>
+      </div>
+    </div>
+    <div class="grid3" id="tptCards"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Rincian angka lengkap</div>
+    <table>
+      <thead>
+        <tr><th>Kelompok</th><th class="num">Bekerja (n)</th><th class="num">Pengangguran (n)</th><th class="num">TPT tanpa bobot</th><th class="num">TPT tertimbang</th></tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="meta-line">
+      Dari <span id="usedCount">0</span> orang yang direklasifikasi —
+      Kota: <span id="usedKota">0</span>, Desa: <span id="usedDesa">0</span> ·
+      Laki-laki: <span id="usedLaki">0</span>, Perempuan: <span id="usedPerempuan">0</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Komposisi kelompok "potensi" (SRH_ALSN = 7 atau 8)</div>
+    <div class="pool-bar">
+      <div id="barKota" style="background:var(--kota);"></div>
+      <div id="barDesa" style="background:var(--desa);"></div>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--kota);"></span>Kota: <span id="poolKota"></span> orang</span>
+      <span><span class="dot" style="background:var(--desa);"></span>Desa: <span id="poolDesa"></span> orang</span>
+    </div>
+    <div class="pool-bar" style="margin-top:14px;">
+      <div id="barLaki" style="background:var(--laki);"></div>
+      <div id="barPerempuan" style="background:var(--perempuan);"></div>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--laki);"></span>Laki-laki: <span id="poolLaki"></span> orang</span>
+      <span><span class="dot" style="background:var(--perempuan);"></span>Perempuan: <span id="poolPerempuan"></span> orang</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <span>Daftar ID kelompok "potensi" (SRH_ALSN = 7 atau 8) — pilih manual</span>
+    </div>
+    <div class="controls-row" style="margin-bottom:14px;">
+      <div class="control">
+        <label>Cari ID</label>
+        <input type="number" id="searchId" placeholder="ketik ID...">
+      </div>
+      <div class="control">
+        <label>Filter Kota/Desa</label>
+        <select id="filterKlas" class="selectbox"><option value="">Semua</option><option value="Kota">Kota</option><option value="Desa">Desa</option></select>
+      </div>
+      <div class="control">
+        <label>Filter Jenis Kelamin</label>
+        <select id="filterSex" class="selectbox"><option value="">Semua</option><option value="Laki-laki">Laki-laki</option><option value="Perempuan">Perempuan</option></select>
+      </div>
+      <div class="control" style="flex:0 0 auto; display:flex; gap:8px;">
+        <button id="selectAllBtn" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line);">Pilih semua (hasil filter)</button>
+        <button id="clearSelBtn" style="background:var(--panel-2); color:var(--text); border:1px solid var(--line);">Bersihkan pilihan</button>
+      </div>
+    </div>
+
+    <div style="max-height:340px; overflow:auto; border:1px solid var(--line); border-radius:8px;">
+      <table style="margin-top:0;">
+        <thead style="position:sticky; top:0; background:var(--panel-2);">
+          <tr>
+            <th style="width:34px;"></th>
+            <th>ID</th><th>Kota/Desa</th><th>Jenis Kelamin</th><th class="num">Umur</th><th>Alasan (SRH_ALSN)</th><th class="num">Bobot</th>
+          </tr>
+        </thead>
+        <tbody id="poolListBody"></tbody>
+      </table>
+    </div>
+
+    <div class="meta-line" id="selectionSummary" style="border-top:1px solid var(--line); margin-top:14px; padding-top:14px;"></div>
+
+    <div style="margin-top:14px; display:flex; gap:10px; align-items:center;">
+      <button id="downloadBtn">Unduh pilihan (CSV)</button>
+      <span style="font-size:12px; color:var(--muted);" id="downloadHint"></span>
+    </div>
+
+    <div id="previewBox" style="margin-top:14px; display:none;">
+      <div class="panel-title">Preview data terpilih</div>
+      <table id="previewTable"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="footnote">
+    Catatan metodologi: karena orang-orang di kelompok "potensi" ini saat ini berada di luar angkatan kerja
+    (bukan kode Bekerja maupun Pengangguran), memindahkan mereka ke Pengangguran menambah pembilang
+    <i>dan</i> penyebut TPT sekaligus. Urutan pengambilan sampel dari pool diacak dengan seed tetap agar hasil
+    dapat direproduksi setiap dashboard ini dibuka ulang.
+  </div>
+</div>
+
+<script>
+const base = {"nasional": {"k1": 2991, "k2": 36, "w1": 2653137.0, "w2": 30803.0}, "kota": {"k1": 1889, "k2": 25, "w1": 1941374.0, "w2": 24955.0}, "desa": {"k1": 1102, "k2": 11, "w1": 711763.0, "w2": 5848.0}, "laki": {"k1": 1644, "k2": 19, "w1": 1458176.0, "w2": 17520.0}, "perempuan": {"k1": 1347, "k2": 17, "w1": 1194961.0, "w2": 13283.0}};
+
+const pool = [{"klas": "kota", "sex": "perempuan", "w": 810.0}, {"klas": "kota", "sex": "perempuan", "w": 2257.0}, {"klas": "desa", "sex": "perempuan", "w": 860.0}, {"klas": "desa", "sex": "perempuan", "w": 604.0}, {"klas": "desa", "sex": "laki", "w": 1218.0}, {"klas": "desa", "sex": "perempuan", "w": 620.0}, {"klas": "kota", "sex": "laki", "w": 558.0}, {"klas": "kota", "sex": "perempuan", "w": 568.0}, {"klas": "kota", "sex": "perempuan", "w": 788.0}, {"klas": "kota", "sex": "perempuan", "w": 623.0}, {"klas": "desa", "sex": "perempuan", "w": 644.0}, {"klas": "kota", "sex": "laki", "w": 490.0}, {"klas": "kota", "sex": "perempuan", "w": 2561.0}, {"klas": "desa", "sex": "perempuan", "w": 267.0}, {"klas": "kota", "sex": "laki", "w": 1152.0}, {"klas": "desa", "sex": "perempuan", "w": 181.0}, {"klas": "kota", "sex": "perempuan", "w": 796.0}, {"klas": "kota", "sex": "laki", "w": 1633.0}, {"klas": "kota", "sex": "perempuan", "w": 1888.0}, {"klas": "kota", "sex": "laki", "w": 1032.0}, {"klas": "kota", "sex": "perempuan", "w": 238.0}, {"klas": "kota", "sex": "laki", "w": 489.0}, {"klas": "kota", "sex": "laki", "w": 975.0}, {"klas": "desa", "sex": "perempuan", "w": 456.0}, {"klas": "kota", "sex": "laki", "w": 489.0}, {"klas": "desa", "sex": "perempuan", "w": 249.0}, {"klas": "desa", "sex": "laki", "w": 795.0}, {"klas": "kota", "sex": "laki", "w": 2860.0}, {"klas": "desa", "sex": "perempuan", "w": 857.0}, {"klas": "desa", "sex": "perempuan", "w": 628.0}, {"klas": "kota", "sex": "perempuan", "w": 1177.0}, {"klas": "kota", "sex": "perempuan", "w": 455.0}, {"klas": "desa", "sex": "laki", "w": 1180.0}, {"klas": "desa", "sex": "perempuan", "w": 461.0}, {"klas": "kota", "sex": "laki", "w": 282.0}, {"klas": "kota", "sex": "perempuan", "w": 1317.0}, {"klas": "kota", "sex": "laki", "w": 1152.0}, {"klas": "desa", "sex": "laki", "w": 466.0}, {"klas": "desa", "sex": "laki", "w": 418.0}, {"klas": "desa", "sex": "laki", "w": 519.0}, {"klas": "kota", "sex": "laki", "w": 3140.0}, {"klas": "kota", "sex": "perempuan", "w": 437.0}, {"klas": "kota", "sex": "laki", "w": 715.0}, {"klas": "kota", "sex": "perempuan", "w": 1430.0}, {"klas": "kota", "sex": "laki", "w": 1162.0}, {"klas": "kota", "sex": "laki", "w": 453.0}, {"klas": "kota", "sex": "perempuan", "w": 1346.0}, {"klas": "desa", "sex": "laki", "w": 719.0}, {"klas": "desa", "sex": "laki", "w": 316.0}, {"klas": "kota", "sex": "perempuan", "w": 2026.0}, {"klas": "kota", "sex": "laki", "w": 770.0}, {"klas": "kota", "sex": "perempuan", "w": 957.0}, {"klas": "kota", "sex": "laki", "w": 423.0}, {"klas": "kota", "sex": "laki", "w": 926.0}, {"klas": "kota", "sex": "perempuan", "w": 1662.0}, {"klas": "desa", "sex": "laki", "w": 795.0}, {"klas": "desa", "sex": "laki", "w": 604.0}, {"klas": "desa", "sex": "laki", "w": 269.0}, {"klas": "kota", "sex": "perempuan", "w": 1620.0}, {"klas": "kota", "sex": "laki", "w": 1394.0}, {"klas": "kota", "sex": "laki", "w": 1735.0}, {"klas": "desa", "sex": "laki", "w": 154.0}, {"klas": "desa", "sex": "laki", "w": 803.0}, {"klas": "desa", "sex": "perempuan", "w": 731.0}, {"klas": "kota", "sex": "perempuan", "w": 644.0}, {"klas": "desa", "sex": "perempuan", "w": 277.0}, {"klas": "desa", "sex": "laki", "w": 341.0}, {"klas": "kota", "sex": "perempuan", "w": 375.0}, {"klas": "desa", "sex": "perempuan", "w": 750.0}, {"klas": "kota", "sex": "laki", "w": 986.0}, {"klas": "desa", "sex": "laki", "w": 1121.0}, {"klas": "kota", "sex": "laki", "w": 388.0}, {"klas": "kota", "sex": "perempuan", "w": 1224.0}, {"klas": "desa", "sex": "laki", "w": 552.0}, {"klas": "kota", "sex": "perempuan", "w": 864.0}, {"klas": "desa", "sex": "perempuan", "w": 501.0}, {"klas": "kota", "sex": "perempuan", "w": 1211.0}, {"klas": "kota", "sex": "perempuan", "w": 892.0}, {"klas": "kota", "sex": "perempuan", "w": 547.0}, {"klas": "desa", "sex": "laki", "w": 300.0}, {"klas": "desa", "sex": "perempuan", "w": 1000.0}, {"klas": "kota", "sex": "laki", "w": 537.0}, {"klas": "kota", "sex": "laki", "w": 346.0}, {"klas": "kota", "sex": "laki", "w": 402.0}, {"klas": "desa", "sex": "perempuan", "w": 981.0}, {"klas": "desa", "sex": "perempuan", "w": 679.0}, {"klas": "kota", "sex": "perempuan", "w": 1546.0}, {"klas": "kota", "sex": "perempuan", "w": 1888.0}, {"klas": "kota", "sex": "perempuan", "w": 788.0}, {"klas": "kota", "sex": "laki", "w": 1405.0}, {"klas": "kota", "sex": "perempuan", "w": 116.0}, {"klas": "kota", "sex": "perempuan", "w": 358.0}, {"klas": "kota", "sex": "laki", "w": 2540.0}, {"klas": "desa", "sex": "perempuan", "w": 1703.0}, {"klas": "desa", "sex": "perempuan", "w": 620.0}, {"klas": "kota", "sex": "perempuan", "w": 2215.0}, {"klas": "kota", "sex": "laki", "w": 952.0}, {"klas": "kota", "sex": "laki", "w": 1203.0}, {"klas": "desa", "sex": "perempuan", "w": 365.0}, {"klas": "kota", "sex": "perempuan", "w": 864.0}, {"klas": "kota", "sex": "laki", "w": 640.0}, {"klas": "kota", "sex": "laki", "w": 75.0}, {"klas": "kota", "sex": "perempuan", "w": 1017.0}, {"klas": "kota", "sex": "laki", "w": 1134.0}, {"klas": "kota", "sex": "laki", "w": 1155.0}, {"klas": "desa", "sex": "perempuan", "w": 716.0}, {"klas": "kota", "sex": "laki", "w": 75.0}, {"klas": "kota", "sex": "perempuan", "w": 336.0}, {"klas": "desa", "sex": "laki", "w": 954.0}, {"klas": "desa", "sex": "perempuan", "w": 380.0}, {"klas": "desa", "sex": "perempuan", "w": 287.0}, {"klas": "desa", "sex": "laki", "w": 418.0}, {"klas": "desa", "sex": "perempuan", "w": 628.0}, {"klas": "kota", "sex": "laki", "w": 1216.0}, {"klas": "desa", "sex": "perempuan", "w": 531.0}, {"klas": "kota", "sex": "perempuan", "w": 994.0}, {"klas": "kota", "sex": "perempuan", "w": 1272.0}, {"klas": "desa", "sex": "perempuan", "w": 470.0}, {"klas": "kota", "sex": "laki", "w": 1499.0}, {"klas": "kota", "sex": "laki", "w": 1847.0}, {"klas": "desa", "sex": "perempuan", "w": 701.0}, {"klas": "kota", "sex": "perempuan", "w": 1211.0}, {"klas": "kota", "sex": "laki", "w": 362.0}, {"klas": "kota", "sex": "perempuan", "w": 1186.0}, {"klas": "desa", "sex": "perempuan", "w": 577.0}, {"klas": "kota", "sex": "laki", "w": 1110.0}, {"klas": "kota", "sex": "perempuan", "w": 2189.0}, {"klas": "desa", "sex": "laki", "w": 236.0}, {"klas": "kota", "sex": "perempuan", "w": 2326.0}, {"klas": "desa", "sex": "laki", "w": 323.0}, {"klas": "desa", "sex": "perempuan", "w": 679.0}, {"klas": "desa", "sex": "laki", "w": 722.0}, {"klas": "desa", "sex": "perempuan", "w": 461.0}, {"klas": "kota", "sex": "perempuan", "w": 84.0}, {"klas": "kota", "sex": "laki", "w": 1362.0}, {"klas": "kota", "sex": "laki", "w": 2199.0}, {"klas": "kota", "sex": "laki", "w": 521.0}, {"klas": "kota", "sex": "laki", "w": 626.0}, {"klas": "kota", "sex": "perempuan", "w": 99.0}, {"klas": "kota", "sex": "laki", "w": 1568.0}, {"klas": "desa", "sex": "perempuan", "w": 202.0}, {"klas": "kota", "sex": "perempuan", "w": 1408.0}, {"klas": "desa", "sex": "perempuan", "w": 673.0}, {"klas": "desa", "sex": "laki", "w": 545.0}, {"klas": "desa", "sex": "laki", "w": 803.0}, {"klas": "kota", "sex": "laki", "w": 1726.0}, {"klas": "kota", "sex": "perempuan", "w": 1129.0}, {"klas": "kota", "sex": "perempuan", "w": 2026.0}, {"klas": "kota", "sex": "perempuan", "w": 116.0}, {"klas": "desa", "sex": "perempuan", "w": 892.0}, {"klas": "kota", "sex": "perempuan", "w": 1626.0}, {"klas": "kota", "sex": "laki", "w": 886.0}, {"klas": "desa", "sex": "laki", "w": 808.0}, {"klas": "kota", "sex": "laki", "w": 411.0}, {"klas": "kota", "sex": "perempuan", "w": 743.0}, {"klas": "kota", "sex": "laki", "w": 1332.0}, {"klas": "desa", "sex": "laki", "w": 723.0}, {"klas": "desa", "sex": "perempuan", "w": 437.0}, {"klas": "kota", "sex": "laki", "w": 341.0}, {"klas": "kota", "sex": "perempuan", "w": 297.0}, {"klas": "desa", "sex": "laki", "w": 668.0}, {"klas": "desa", "sex": "laki", "w": 417.0}, {"klas": "kota", "sex": "laki", "w": 1154.0}, {"klas": "kota", "sex": "perempuan", "w": 411.0}, {"klas": "desa", "sex": "perempuan", "w": 480.0}, {"klas": "desa", "sex": "perempuan", "w": 1564.0}, {"klas": "desa", "sex": "perempuan", "w": 1367.0}, {"klas": "kota", "sex": "laki", "w": 1793.0}, {"klas": "kota", "sex": "laki", "w": 857.0}, {"klas": "desa", "sex": "perempuan", "w": 1361.0}, {"klas": "kota", "sex": "laki", "w": 1855.0}, {"klas": "desa", "sex": "perempuan", "w": 164.0}, {"klas": "kota", "sex": "perempuan", "w": 1317.0}, {"klas": "kota", "sex": "perempuan", "w": 1048.0}, {"klas": "desa", "sex": "laki", "w": 604.0}, {"klas": "kota", "sex": "laki", "w": 488.0}, {"klas": "kota", "sex": "laki", "w": 1645.0}, {"klas": "desa", "sex": "perempuan", "w": 177.0}, {"klas": "desa", "sex": "laki", "w": 1269.0}, {"klas": "desa", "sex": "perempuan", "w": 336.0}, {"klas": "kota", "sex": "perempuan", "w": 1401.0}, {"klas": "kota", "sex": "laki", "w": 368.0}, {"klas": "kota", "sex": "perempuan", "w": 481.0}, {"klas": "desa", "sex": "laki", "w": 636.0}, {"klas": "kota", "sex": "laki", "w": 632.0}, {"klas": "kota", "sex": "laki", "w": 1839.0}, {"klas": "kota", "sex": "perempuan", "w": 1667.0}, {"klas": "kota", "sex": "perempuan", "w": 864.0}, {"klas": "desa", "sex": "perempuan", "w": 628.0}, {"klas": "kota", "sex": "laki", "w": 462.0}, {"klas": "desa", "sex": "perempuan", "w": 898.0}, {"klas": "desa", "sex": "laki", "w": 127.0}, {"klas": "kota", "sex": "perempuan", "w": 1069.0}, {"klas": "kota", "sex": "laki", "w": 430.0}, {"klas": "kota", "sex": "laki", "w": 570.0}, {"klas": "desa", "sex": "perempuan", "w": 730.0}, {"klas": "kota", "sex": "laki", "w": 1166.0}, {"klas": "desa", "sex": "laki", "w": 403.0}, {"klas": "desa", "sex": "laki", "w": 505.0}, {"klas": "desa", "sex": "perempuan", "w": 181.0}, {"klas": "desa", "sex": "laki", "w": 161.0}, {"klas": "kota", "sex": "laki", "w": 1568.0}, {"klas": "desa", "sex": "perempuan", "w": 435.0}, {"klas": "kota", "sex": "perempuan", "w": 411.0}, {"klas": "kota", "sex": "laki", "w": 1461.0}, {"klas": "kota", "sex": "laki", "w": 1332.0}, {"klas": "kota", "sex": "perempuan", "w": 568.0}, {"klas": "kota", "sex": "laki", "w": 914.0}, {"klas": "desa", "sex": "laki", "w": 541.0}, {"klas": "kota", "sex": "perempuan", "w": 1173.0}, {"klas": "kota", "sex": "laki", "w": 2408.0}, {"klas": "kota", "sex": "perempuan", "w": 1050.0}, {"klas": "desa", "sex": "perempuan", "w": 181.0}, {"klas": "kota", "sex": "perempuan", "w": 405.0}, {"klas": "desa", "sex": "perempuan", "w": 480.0}, {"klas": "desa", "sex": "laki", "w": 604.0}, {"klas": "desa", "sex": "perempuan", "w": 576.0}, {"klas": "kota", "sex": "laki", "w": 1194.0}, {"klas": "kota", "sex": "laki", "w": 1362.0}, {"klas": "kota", "sex": "perempuan", "w": 924.0}, {"klas": "desa", "sex": "laki", "w": 536.0}];
+
+let currentView = "wilayah";
+
+const poolKotaCount = pool.filter(p => p.klas === "kota").length;
+const poolDesaCount = pool.filter(p => p.klas === "desa").length;
+const poolLakiCount = pool.filter(p => p.sex === "laki").length;
+const poolPerempuanCount = pool.filter(p => p.sex === "perempuan").length;
+
+document.getElementById("poolTotal").textContent = pool.length;
+document.getElementById("poolKota").textContent = poolKotaCount;
+document.getElementById("poolDesa").textContent = poolDesaCount;
+document.getElementById("barKota").style.width = (poolKotaCount/pool.length*100) + "%";
+document.getElementById("barDesa").style.width = (poolDesaCount/pool.length*100) + "%";
+document.getElementById("poolLaki").textContent = poolLakiCount;
+document.getElementById("poolPerempuan").textContent = poolPerempuanCount;
+document.getElementById("barLaki").style.width = (poolLakiCount/pool.length*100) + "%";
+document.getElementById("barPerempuan").style.width = (poolPerempuanCount/pool.length*100) + "%";
+
+const slider = document.getElementById("slider");
+const sliderVal = document.getElementById("sliderVal");
+const sliderSub = document.getElementById("sliderSub");
+const tptCards = document.getElementById("tptCards");
+const tableBody = document.getElementById("tableBody");
+
+function fmtPct(n){ return n.toFixed(2) + "%"; }
+function fmtNum(n){ return n.toLocaleString("id-ID"); }
+
+function region(b, cnt, w){
+  const k1 = b.k1, k2 = b.k2 + cnt;
+  const w1 = b.w1, w2 = b.w2 + w;
+  return {
+    k1,k2,w1,w2,
+    tptUnw: k2/(k1+k2)*100,
+    tptW: w2/(w1+w2)*100,
+    tptUnwBefore: b.k2/(b.k1+b.k2)*100,
+    tptWBefore: b.w2/(b.w1+b.w2)*100
+  };
+}
+
+function computeAt(n){
+  const taken = pool.slice(0, n);
+  const takenKota = taken.filter(p => p.klas === "kota");
+  const takenDesa = taken.filter(p => p.klas === "desa");
+  const takenLaki = taken.filter(p => p.sex === "laki");
+  const takenPerempuan = taken.filter(p => p.sex === "perempuan");
+
+  const wKota = takenKota.reduce((s,p)=>s+p.w,0);
+  const wDesa = takenDesa.reduce((s,p)=>s+p.w,0);
+  const wLaki = takenLaki.reduce((s,p)=>s+p.w,0);
+  const wPerempuan = takenPerempuan.reduce((s,p)=>s+p.w,0);
+
+  return {
+    nasional: region(base.nasional, taken.length, wKota+wDesa),
+    kota: region(base.kota, takenKota.length, wKota),
+    desa: region(base.desa, takenDesa.length, wDesa),
+    laki: region(base.laki, takenLaki.length, wLaki),
+    perempuan: region(base.perempuan, takenPerempuan.length, wPerempuan),
+    usedKota: takenKota.length, usedDesa: takenDesa.length,
+    usedLaki: takenLaki.length, usedPerempuan: takenPerempuan.length,
+    usedTotal: taken.length
+  };
+}
+
+function cardsFor(view){
+  if(view === "wilayah") return [
+    {key:"nasional", label:"Nasional", cls:"nas"},
+    {key:"kota", label:"Kota", cls:"kota"},
+    {key:"desa", label:"Desa", cls:"desa"}
+  ];
+  return [
+    {key:"nasional", label:"Nasional", cls:"nas"},
+    {key:"laki", label:"Laki-laki", cls:"laki"},
+    {key:"perempuan", label:"Perempuan", cls:"perempuan"}
+  ];
+}
+
+function render(n){
+  const r = computeAt(n);
+  sliderVal.textContent = n;
+  sliderSub.textContent = "dari " + pool.length + " orang yang tersedia di kelompok potensi";
+
+  const cards = cardsFor(currentView);
+  tptCards.innerHTML = cards.map(c => {
+    const d = r[c.key];
+    const delta = d.tptW - d.tptWBefore;
+    return `<div class="card ${c.cls}">
+      <div class="card-label">${c.label}</div>
+      <div class="tpt-row">
+        <span class="tpt-before">${fmtPct(d.tptWBefore)}</span>
+        <span class="tpt-arrow">&rarr;</span>
+        <span class="tpt-num">${fmtPct(d.tptW)}</span>
+      </div>
+      <div class="delta ${delta>0?'up':''}">+${delta.toFixed(2)} pp</div>
+    </div>`;
+  }).join("");
+
+  const allGroups = [
+    {key:"nasional", label:"Nasional"},
+    {key:"kota", label:"Kota"},
+    {key:"desa", label:"Desa"},
+    {key:"laki", label:"Laki-laki"},
+    {key:"perempuan", label:"Perempuan"}
+  ];
+  tableBody.innerHTML = allGroups.map(c => {
+    const d = r[c.key];
+    return `<tr>
+      <td>${c.label}</td>
+      <td class="num">${fmtNum(d.k1)}</td>
+      <td class="num">${fmtNum(d.k2)}</td>
+      <td class="num">${fmtPct(d.tptUnw)}</td>
+      <td class="num">${fmtPct(d.tptW)}</td>
+    </tr>`;
+  }).join("");
+
+  document.getElementById("usedCount").textContent = r.usedTotal;
+  document.getElementById("usedKota").textContent = r.usedKota;
+  document.getElementById("usedDesa").textContent = r.usedDesa;
+  document.getElementById("usedLaki").textContent = r.usedLaki;
+  document.getElementById("usedPerempuan").textContent = r.usedPerempuan;
+}
+
+slider.addEventListener("input", () => render(parseInt(slider.value)));
+
+document.getElementById("autoBtn").addEventListener("click", () => {
+  const target = parseFloat(document.getElementById("targetInput").value);
+  if (isNaN(target)) return;
+  let best = 0, bestDiff = Infinity;
+  for(let n=0; n<=pool.length; n++){
+    const r = computeAt(n);
+    const diff = Math.abs(r.nasional.tptW - target);
+    if(diff < bestDiff){ bestDiff = diff; best = n; }
+  }
+  slider.value = best;
+  render(best);
+});
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentView = tab.dataset.view;
+    render(parseInt(slider.value));
+  });
+});
+
+render(0);
+
+// ===== Daftar ID + checklist manual =====
+const poolList = [{"id": 200, "klas": "Desa", "sex": "Laki-laki", "umur": 53, "alasan": "8 - Selain alasan di atas", "bobot": 269.0}, {"id": 2415, "klas": "Kota", "sex": "Perempuan", "umur": 70, "alasan": "8 - Selain alasan di atas", "bobot": 644.0}, {"id": 3607, "klas": "Kota", "sex": "Perempuan", "umur": 80, "alasan": "7 - Tidak mampu bekerja", "bobot": 864.0}, {"id": 5786, "klas": "Kota", "sex": "Perempuan", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 1430.0}, {"id": 8858, "klas": "Kota", "sex": "Perempuan", "umur": 60, "alasan": "7 - Tidak mampu bekerja", "bobot": 455.0}, {"id": 12713, "klas": "Desa", "sex": "Perempuan", "umur": 55, "alasan": "8 - Selain alasan di atas", "bobot": 857.0}, {"id": 13043, "klas": "Kota", "sex": "Laki-laki", "umur": 75, "alasan": "7 - Tidak mampu bekerja", "bobot": 1152.0}, {"id": 13190, "klas": "Kota", "sex": "Laki-laki", "umur": 46, "alasan": "7 - Tidak mampu bekerja", "bobot": 1216.0}, {"id": 13735, "klas": "Kota", "sex": "Perempuan", "umur": 67, "alasan": "7 - Tidak mampu bekerja", "bobot": 1211.0}, {"id": 16073, "klas": "Kota", "sex": "Perempuan", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 568.0}, {"id": 19953, "klas": "Desa", "sex": "Laki-laki", "umur": 63, "alasan": "7 - Tidak mampu bekerja", "bobot": 722.0}, {"id": 23581, "klas": "Kota", "sex": "Laki-laki", "umur": 59, "alasan": "7 - Tidak mampu bekerja", "bobot": 632.0}, {"id": 24323, "klas": "Desa", "sex": "Perempuan", "umur": 69, "alasan": "7 - Tidak mampu bekerja", "bobot": 576.0}, {"id": 26927, "klas": "Kota", "sex": "Laki-laki", "umur": 78, "alasan": "7 - Tidak mampu bekerja", "bobot": 1152.0}, {"id": 26928, "klas": "Kota", "sex": "Perempuan", "umur": 73, "alasan": "7 - Tidak mampu bekerja", "bobot": 1173.0}, {"id": 27240, "klas": "Desa", "sex": "Laki-laki", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 403.0}, {"id": 28819, "klas": "Desa", "sex": "Perempuan", "umur": 53, "alasan": "7 - Tidak mampu bekerja", "bobot": 480.0}, {"id": 30176, "klas": "Desa", "sex": "Perempuan", "umur": 19, "alasan": "8 - Selain alasan di atas", "bobot": 435.0}, {"id": 31268, "klas": "Desa", "sex": "Laki-laki", "umur": 85, "alasan": "8 - Selain alasan di atas", "bobot": 604.0}, {"id": 31269, "klas": "Desa", "sex": "Perempuan", "umur": 84, "alasan": "7 - Tidak mampu bekerja", "bobot": 679.0}, {"id": 31573, "klas": "Kota", "sex": "Perempuan", "umur": 86, "alasan": "7 - Tidak mampu bekerja", "bobot": 2026.0}, {"id": 32976, "klas": "Kota", "sex": "Laki-laki", "umur": 21, "alasan": "8 - Selain alasan di atas", "bobot": 952.0}, {"id": 33322, "klas": "Kota", "sex": "Laki-laki", "umur": 70, "alasan": "8 - Selain alasan di atas", "bobot": 1332.0}, {"id": 35186, "klas": "Desa", "sex": "Laki-laki", "umur": 90, "alasan": "7 - Tidak mampu bekerja", "bobot": 161.0}, {"id": 35187, "klas": "Desa", "sex": "Perempuan", "umur": 87, "alasan": "7 - Tidak mampu bekerja", "bobot": 181.0}, {"id": 37994, "klas": "Kota", "sex": "Laki-laki", "umur": 72, "alasan": "7 - Tidak mampu bekerja", "bobot": 3140.0}, {"id": 38312, "klas": "Kota", "sex": "Perempuan", "umur": 80, "alasan": "7 - Tidak mampu bekerja", "bobot": 1317.0}, {"id": 38519, "klas": "Kota", "sex": "Perempuan", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 358.0}, {"id": 41984, "klas": "Kota", "sex": "Perempuan", "umur": 83, "alasan": "7 - Tidak mampu bekerja", "bobot": 788.0}, {"id": 42729, "klas": "Kota", "sex": "Laki-laki", "umur": 61, "alasan": "8 - Selain alasan di atas", "bobot": 388.0}, {"id": 44205, "klas": "Desa", "sex": "Perempuan", "umur": 95, "alasan": "7 - Tidak mampu bekerja", "bobot": 177.0}, {"id": 45718, "klas": "Desa", "sex": "Perempuan", "umur": 29, "alasan": "8 - Selain alasan di atas", "bobot": 730.0}, {"id": 45896, "klas": "Desa", "sex": "Laki-laki", "umur": 62, "alasan": "7 - Tidak mampu bekerja", "bobot": 719.0}, {"id": 46502, "klas": "Kota", "sex": "Laki-laki", "umur": 87, "alasan": "7 - Tidak mampu bekerja", "bobot": 2860.0}, {"id": 47312, "klas": "Kota", "sex": "Perempuan", "umur": 47, "alasan": "7 - Tidak mampu bekerja", "bobot": 481.0}, {"id": 47390, "klas": "Desa", "sex": "Laki-laki", "umur": 83, "alasan": "7 - Tidak mampu bekerja", "bobot": 300.0}, {"id": 47391, "klas": "Desa", "sex": "Perempuan", "umur": 83, "alasan": "7 - Tidak mampu bekerja", "bobot": 336.0}, {"id": 48124, "klas": "Desa", "sex": "Laki-laki", "umur": 52, "alasan": "8 - Selain alasan di atas", "bobot": 154.0}, {"id": 51756, "klas": "Kota", "sex": "Perempuan", "umur": 67, "alasan": "7 - Tidak mampu bekerja", "bobot": 924.0}, {"id": 53975, "klas": "Desa", "sex": "Perempuan", "umur": 24, "alasan": "8 - Selain alasan di atas", "bobot": 287.0}, {"id": 55112, "klas": "Desa", "sex": "Laki-laki", "umur": 96, "alasan": "7 - Tidak mampu bekerja", "bobot": 519.0}, {"id": 55306, "klas": "Kota", "sex": "Laki-laki", "umur": 68, "alasan": "7 - Tidak mampu bekerja", "bobot": 453.0}, {"id": 57895, "klas": "Kota", "sex": "Laki-laki", "umur": 73, "alasan": "7 - Tidak mampu bekerja", "bobot": 521.0}, {"id": 59434, "klas": "Kota", "sex": "Laki-laki", "umur": 62, "alasan": "8 - Selain alasan di atas", "bobot": 1162.0}, {"id": 59523, "klas": "Kota", "sex": "Laki-laki", "umur": 40, "alasan": "7 - Tidak mampu bekerja", "bobot": 640.0}, {"id": 62028, "klas": "Kota", "sex": "Laki-laki", "umur": 67, "alasan": "7 - Tidak mampu bekerja", "bobot": 1203.0}, {"id": 62029, "klas": "Kota", "sex": "Perempuan", "umur": 56, "alasan": "8 - Selain alasan di atas", "bobot": 1048.0}, {"id": 62617, "klas": "Kota", "sex": "Perempuan", "umur": 94, "alasan": "7 - Tidak mampu bekerja", "bobot": 810.0}, {"id": 62768, "klas": "Kota", "sex": "Laki-laki", "umur": 83, "alasan": "8 - Selain alasan di atas", "bobot": 857.0}, {"id": 62769, "klas": "Kota", "sex": "Perempuan", "umur": 75, "alasan": "8 - Selain alasan di atas", "bobot": 1017.0}, {"id": 63228, "klas": "Kota", "sex": "Perempuan", "umur": 76, "alasan": "7 - Tidak mampu bekerja", "bobot": 1888.0}, {"id": 63439, "klas": "Kota", "sex": "Laki-laki", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 537.0}, {"id": 65926, "klas": "Desa", "sex": "Laki-laki", "umur": 81, "alasan": "7 - Tidak mampu bekerja", "bobot": 668.0}, {"id": 66197, "klas": "Kota", "sex": "Perempuan", "umur": 83, "alasan": "7 - Tidak mampu bekerja", "bobot": 864.0}, {"id": 66769, "klas": "Kota", "sex": "Laki-laki", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 914.0}, {"id": 68769, "klas": "Kota", "sex": "Perempuan", "umur": 24, "alasan": "8 - Selain alasan di atas", "bobot": 892.0}, {"id": 68817, "klas": "Kota", "sex": "Laki-laki", "umur": 36, "alasan": "7 - Tidak mampu bekerja", "bobot": 1839.0}, {"id": 69888, "klas": "Kota", "sex": "Laki-laki", "umur": 43, "alasan": "8 - Selain alasan di atas", "bobot": 570.0}, {"id": 73420, "klas": "Kota", "sex": "Laki-laki", "umur": 68, "alasan": "8 - Selain alasan di atas", "bobot": 362.0}, {"id": 73844, "klas": "Desa", "sex": "Perempuan", "umur": 47, "alasan": "7 - Tidak mampu bekerja", "bobot": 365.0}, {"id": 74579, "klas": "Desa", "sex": "Perempuan", "umur": 79, "alasan": "7 - Tidak mampu bekerja", "bobot": 470.0}, {"id": 75249, "klas": "Kota", "sex": "Laki-laki", "umur": 68, "alasan": "8 - Selain alasan di atas", "bobot": 1568.0}, {"id": 76907, "klas": "Kota", "sex": "Perempuan", "umur": 80, "alasan": "7 - Tidak mampu bekerja", "bobot": 116.0}, {"id": 77125, "klas": "Kota", "sex": "Perempuan", "umur": 78, "alasan": "7 - Tidak mampu bekerja", "bobot": 1626.0}, {"id": 77814, "klas": "Kota", "sex": "Laki-laki", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 489.0}, {"id": 77883, "klas": "Kota", "sex": "Laki-laki", "umur": 56, "alasan": "7 - Tidak mampu bekerja", "bobot": 715.0}, {"id": 78080, "klas": "Desa", "sex": "Perempuan", "umur": 98, "alasan": "7 - Tidak mampu bekerja", "bobot": 277.0}, {"id": 80506, "klas": "Desa", "sex": "Perempuan", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 249.0}, {"id": 81225, "klas": "Kota", "sex": "Perempuan", "umur": 74, "alasan": "7 - Tidak mampu bekerja", "bobot": 796.0}, {"id": 82087, "klas": "Desa", "sex": "Laki-laki", "umur": 75, "alasan": "7 - Tidak mampu bekerja", "bobot": 795.0}, {"id": 85823, "klas": "Desa", "sex": "Perempuan", "umur": 94, "alasan": "7 - Tidak mampu bekerja", "bobot": 1000.0}, {"id": 87519, "klas": "Desa", "sex": "Laki-laki", "umur": 82, "alasan": "7 - Tidak mampu bekerja", "bobot": 341.0}, {"id": 87856, "klas": "Desa", "sex": "Perempuan", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 461.0}, {"id": 90205, "klas": "Kota", "sex": "Perempuan", "umur": 66, "alasan": "7 - Tidak mampu bekerja", "bobot": 1408.0}, {"id": 90256, "klas": "Kota", "sex": "Laki-laki", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 368.0}, {"id": 90257, "klas": "Kota", "sex": "Perempuan", "umur": 75, "alasan": "7 - Tidak mampu bekerja", "bobot": 437.0}, {"id": 90403, "klas": "Kota", "sex": "Laki-laki", "umur": 57, "alasan": "7 - Tidak mampu bekerja", "bobot": 886.0}, {"id": 90854, "klas": "Kota", "sex": "Perempuan", "umur": 26, "alasan": "8 - Selain alasan di atas", "bobot": 2257.0}, {"id": 93825, "klas": "Kota", "sex": "Laki-laki", "umur": 50, "alasan": "8 - Selain alasan di atas", "bobot": 488.0}, {"id": 102309, "klas": "Desa", "sex": "Perempuan", "umur": 64, "alasan": "8 - Selain alasan di atas", "bobot": 501.0}, {"id": 106287, "klas": "Desa", "sex": "Laki-laki", "umur": 21, "alasan": "7 - Tidak mampu bekerja", "bobot": 723.0}, {"id": 107969, "klas": "Kota", "sex": "Perempuan", "umur": 54, "alasan": "8 - Selain alasan di atas", "bobot": 1177.0}, {"id": 107976, "klas": "Desa", "sex": "Laki-laki", "umur": 67, "alasan": "7 - Tidak mampu bekerja", "bobot": 536.0}, {"id": 109905, "klas": "Desa", "sex": "Perempuan", "umur": 78, "alasan": "7 - Tidak mampu bekerja", "bobot": 267.0}, {"id": 110272, "klas": "Kota", "sex": "Laki-laki", "umur": 67, "alasan": "7 - Tidak mampu bekerja", "bobot": 986.0}, {"id": 110273, "klas": "Kota", "sex": "Perempuan", "umur": 65, "alasan": "7 - Tidak mampu bekerja", "bobot": 994.0}, {"id": 112290, "klas": "Kota", "sex": "Perempuan", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 623.0}, {"id": 112577, "klas": "Desa", "sex": "Laki-laki", "umur": 66, "alasan": "8 - Selain alasan di atas", "bobot": 545.0}, {"id": 115359, "klas": "Kota", "sex": "Perempuan", "umur": 21, "alasan": "8 - Selain alasan di atas", "bobot": 238.0}, {"id": 117224, "klas": "Desa", "sex": "Laki-laki", "umur": 39, "alasan": "8 - Selain alasan di atas", "bobot": 236.0}, {"id": 118837, "klas": "Kota", "sex": "Perempuan", "umur": 67, "alasan": "7 - Tidak mampu bekerja", "bobot": 957.0}, {"id": 120371, "klas": "Kota", "sex": "Laki-laki", "umur": 97, "alasan": "7 - Tidak mampu bekerja", "bobot": 1134.0}, {"id": 120991, "klas": "Desa", "sex": "Laki-laki", "umur": 16, "alasan": "7 - Tidak mampu bekerja", "bobot": 808.0}, {"id": 121809, "klas": "Kota", "sex": "Perempuan", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 1050.0}, {"id": 121865, "klas": "Desa", "sex": "Perempuan", "umur": 84, "alasan": "7 - Tidak mampu bekerja", "bobot": 628.0}, {"id": 124939, "klas": "Kota", "sex": "Laki-laki", "umur": 32, "alasan": "8 - Selain alasan di atas", "bobot": 1793.0}, {"id": 125237, "klas": "Kota", "sex": "Laki-laki", "umur": 48, "alasan": "8 - Selain alasan di atas", "bobot": 402.0}, {"id": 125379, "klas": "Desa", "sex": "Laki-laki", "umur": 88, "alasan": "7 - Tidak mampu bekerja", "bobot": 552.0}, {"id": 125380, "klas": "Desa", "sex": "Perempuan", "umur": 83, "alasan": "7 - Tidak mampu bekerja", "bobot": 620.0}, {"id": 127377, "klas": "Desa", "sex": "Perempuan", "umur": 87, "alasan": "7 - Tidak mampu bekerja", "bobot": 181.0}, {"id": 127676, "klas": "Desa", "sex": "Laki-laki", "umur": 58, "alasan": "7 - Tidak mampu bekerja", "bobot": 316.0}, {"id": 128481, "klas": "Kota", "sex": "Laki-laki", "umur": 84, "alasan": "7 - Tidak mampu bekerja", "bobot": 1362.0}, {"id": 128517, "klas": "Kota", "sex": "Perempuan", "umur": 29, "alasan": "8 - Selain alasan di atas", "bobot": 1186.0}, {"id": 129248, "klas": "Desa", "sex": "Perempuan", "umur": 68, "alasan": "8 - Selain alasan di atas", "bobot": 456.0}, {"id": 130220, "klas": "Kota", "sex": "Perempuan", "umur": 84, "alasan": "7 - Tidak mampu bekerja", "bobot": 116.0}, {"id": 130222, "klas": "Kota", "sex": "Laki-laki", "umur": 51, "alasan": "7 - Tidak mampu bekerja", "bobot": 75.0}, {"id": 131559, "klas": "Kota", "sex": "Laki-laki", "umur": 85, "alasan": "8 - Selain alasan di atas", "bobot": 346.0}, {"id": 131560, "klas": "Kota", "sex": "Perempuan", "umur": 81, "alasan": "8 - Selain alasan di atas", "bobot": 411.0}, {"id": 131945, "klas": "Desa", "sex": "Laki-laki", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 505.0}, {"id": 131946, "klas": "Desa", "sex": "Perempuan", "umur": 65, "alasan": "7 - Tidak mampu bekerja", "bobot": 437.0}, {"id": 134771, "klas": "Kota", "sex": "Laki-laki", "umur": 98, "alasan": "8 - Selain alasan di atas", "bobot": 423.0}, {"id": 136303, "klas": "Kota", "sex": "Laki-laki", "umur": 29, "alasan": "8 - Selain alasan di atas", "bobot": 1461.0}, {"id": 137273, "klas": "Desa", "sex": "Perempuan", "umur": 92, "alasan": "7 - Tidak mampu bekerja", "bobot": 679.0}, {"id": 140102, "klas": "Kota", "sex": "Laki-laki", "umur": 20, "alasan": "8 - Selain alasan di atas", "bobot": 2540.0}, {"id": 140893, "klas": "Desa", "sex": "Perempuan", "umur": 70, "alasan": "8 - Selain alasan di atas", "bobot": 673.0}, {"id": 143558, "klas": "Kota", "sex": "Laki-laki", "umur": 50, "alasan": "7 - Tidak mampu bekerja", "bobot": 75.0}, {"id": 144246, "klas": "Kota", "sex": "Laki-laki", "umur": 93, "alasan": "7 - Tidak mampu bekerja", "bobot": 411.0}, {"id": 144693, "klas": "Kota", "sex": "Laki-laki", "umur": 75, "alasan": "7 - Tidak mampu bekerja", "bobot": 1633.0}, {"id": 144694, "klas": "Kota", "sex": "Perempuan", "umur": 73, "alasan": "7 - Tidak mampu bekerja", "bobot": 1662.0}, {"id": 146790, "klas": "Kota", "sex": "Laki-laki", "umur": 70, "alasan": "8 - Selain alasan di atas", "bobot": 1332.0}, {"id": 146791, "klas": "Kota", "sex": "Perempuan", "umur": 70, "alasan": "8 - Selain alasan di atas", "bobot": 1546.0}, {"id": 147783, "klas": "Desa", "sex": "Perempuan", "umur": 65, "alasan": "7 - Tidak mampu bekerja", "bobot": 531.0}, {"id": 149405, "klas": "Kota", "sex": "Laki-laki", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 489.0}, {"id": 149406, "klas": "Kota", "sex": "Perempuan", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 568.0}, {"id": 151430, "klas": "Desa", "sex": "Laki-laki", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 803.0}, {"id": 152383, "klas": "Kota", "sex": "Perempuan", "umur": 65, "alasan": "7 - Tidak mampu bekerja", "bobot": 84.0}, {"id": 152563, "klas": "Desa", "sex": "Laki-laki", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 803.0}, {"id": 152855, "klas": "Kota", "sex": "Perempuan", "umur": 58, "alasan": "8 - Selain alasan di atas", "bobot": 297.0}, {"id": 152856, "klas": "Kota", "sex": "Perempuan", "umur": 49, "alasan": "8 - Selain alasan di atas", "bobot": 336.0}, {"id": 155868, "klas": "Desa", "sex": "Laki-laki", "umur": 65, "alasan": "8 - Selain alasan di atas", "bobot": 541.0}, {"id": 156847, "klas": "Desa", "sex": "Laki-laki", "umur": 58, "alasan": "7 - Tidak mampu bekerja", "bobot": 1121.0}, {"id": 157861, "klas": "Kota", "sex": "Perempuan", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 99.0}, {"id": 160435, "klas": "Desa", "sex": "Perempuan", "umur": 85, "alasan": "7 - Tidak mampu bekerja", "bobot": 701.0}, {"id": 161050, "klas": "Desa", "sex": "Perempuan", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 1703.0}, {"id": 161386, "klas": "Kota", "sex": "Laki-laki", "umur": 83, "alasan": "7 - Tidak mampu bekerja", "bobot": 1726.0}, {"id": 161817, "klas": "Kota", "sex": "Perempuan", "umur": 79, "alasan": "7 - Tidak mampu bekerja", "bobot": 2326.0}, {"id": 162005, "klas": "Kota", "sex": "Laki-laki", "umur": 86, "alasan": "8 - Selain alasan di atas", "bobot": 341.0}, {"id": 162006, "klas": "Kota", "sex": "Perempuan", "umur": 82, "alasan": "8 - Selain alasan di atas", "bobot": 405.0}, {"id": 162146, "klas": "Desa", "sex": "Laki-laki", "umur": 72, "alasan": "7 - Tidak mampu bekerja", "bobot": 1269.0}, {"id": 162430, "klas": "Kota", "sex": "Perempuan", "umur": 86, "alasan": "7 - Tidak mampu bekerja", "bobot": 1317.0}, {"id": 162553, "klas": "Desa", "sex": "Perempuan", "umur": 85, "alasan": "7 - Tidak mampu bekerja", "bobot": 1564.0}, {"id": 164596, "klas": "Desa", "sex": "Perempuan", "umur": 85, "alasan": "7 - Tidak mampu bekerja", "bobot": 181.0}, {"id": 164899, "klas": "Desa", "sex": "Laki-laki", "umur": 68, "alasan": "8 - Selain alasan di atas", "bobot": 636.0}, {"id": 164905, "klas": "Desa", "sex": "Laki-laki", "umur": 84, "alasan": "7 - Tidak mampu bekerja", "bobot": 604.0}, {"id": 169263, "klas": "Kota", "sex": "Laki-laki", "umur": 66, "alasan": "7 - Tidak mampu bekerja", "bobot": 1166.0}, {"id": 170421, "klas": "Desa", "sex": "Laki-laki", "umur": 66, "alasan": "7 - Tidak mampu bekerja", "bobot": 466.0}, {"id": 171838, "klas": "Kota", "sex": "Laki-laki", "umur": 77, "alasan": "8 - Selain alasan di atas", "bobot": 1645.0}, {"id": 172376, "klas": "Kota", "sex": "Laki-laki", "umur": 67, "alasan": "8 - Selain alasan di atas", "bobot": 462.0}, {"id": 172471, "klas": "Desa", "sex": "Perempuan", "umur": 69, "alasan": "7 - Tidak mampu bekerja", "bobot": 164.0}, {"id": 174314, "klas": "Kota", "sex": "Laki-laki", "umur": 63, "alasan": "8 - Selain alasan di atas", "bobot": 2408.0}, {"id": 174424, "klas": "Kota", "sex": "Laki-laki", "umur": 75, "alasan": "7 - Tidak mampu bekerja", "bobot": 1110.0}, {"id": 174425, "klas": "Kota", "sex": "Perempuan", "umur": 73, "alasan": "7 - Tidak mampu bekerja", "bobot": 1129.0}, {"id": 177472, "klas": "Desa", "sex": "Laki-laki", "umur": 31, "alasan": "7 - Tidak mampu bekerja", "bobot": 1218.0}, {"id": 177574, "klas": "Desa", "sex": "Laki-laki", "umur": 82, "alasan": "7 - Tidak mampu bekerja", "bobot": 418.0}, {"id": 177575, "klas": "Desa", "sex": "Laki-laki", "umur": 79, "alasan": "7 - Tidak mampu bekerja", "bobot": 418.0}, {"id": 178104, "klas": "Kota", "sex": "Laki-laki", "umur": 72, "alasan": "7 - Tidak mampu bekerja", "bobot": 1735.0}, {"id": 178520, "klas": "Desa", "sex": "Laki-laki", "umur": 81, "alasan": "7 - Tidak mampu bekerja", "bobot": 323.0}, {"id": 180010, "klas": "Kota", "sex": "Laki-laki", "umur": 22, "alasan": "8 - Selain alasan di atas", "bobot": 975.0}, {"id": 183740, "klas": "Desa", "sex": "Laki-laki", "umur": 19, "alasan": "8 - Selain alasan di atas", "bobot": 417.0}, {"id": 185792, "klas": "Kota", "sex": "Perempuan", "umur": 76, "alasan": "7 - Tidak mampu bekerja", "bobot": 1272.0}, {"id": 185796, "klas": "Kota", "sex": "Perempuan", "umur": 28, "alasan": "8 - Selain alasan di atas", "bobot": 1069.0}, {"id": 186179, "klas": "Kota", "sex": "Laki-laki", "umur": 56, "alasan": "7 - Tidak mampu bekerja", "bobot": 430.0}, {"id": 187160, "klas": "Desa", "sex": "Perempuan", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 644.0}, {"id": 187796, "klas": "Desa", "sex": "Perempuan", "umur": 23, "alasan": "8 - Selain alasan di atas", "bobot": 1361.0}, {"id": 188253, "klas": "Kota", "sex": "Laki-laki", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 1405.0}, {"id": 189277, "klas": "Kota", "sex": "Perempuan", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 1620.0}, {"id": 189279, "klas": "Kota", "sex": "Laki-laki", "umur": 15, "alasan": "7 - Tidak mampu bekerja", "bobot": 1194.0}, {"id": 189685, "klas": "Kota", "sex": "Laki-laki", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 1032.0}, {"id": 189686, "klas": "Kota", "sex": "Perempuan", "umur": 76, "alasan": "7 - Tidak mampu bekerja", "bobot": 1224.0}, {"id": 189977, "klas": "Kota", "sex": "Perempuan", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 375.0}, {"id": 192131, "klas": "Kota", "sex": "Perempuan", "umur": 88, "alasan": "7 - Tidak mampu bekerja", "bobot": 2189.0}, {"id": 193408, "klas": "Desa", "sex": "Perempuan", "umur": 68, "alasan": "7 - Tidak mampu bekerja", "bobot": 731.0}, {"id": 195340, "klas": "Desa", "sex": "Laki-laki", "umur": 85, "alasan": "7 - Tidak mampu bekerja", "bobot": 795.0}, {"id": 195341, "klas": "Desa", "sex": "Perempuan", "umur": 79, "alasan": "7 - Tidak mampu bekerja", "bobot": 892.0}, {"id": 195847, "klas": "Kota", "sex": "Laki-laki", "umur": 67, "alasan": "8 - Selain alasan di atas", "bobot": 2199.0}, {"id": 195848, "klas": "Kota", "sex": "Perempuan", "umur": 66, "alasan": "8 - Selain alasan di atas", "bobot": 2215.0}, {"id": 197097, "klas": "Kota", "sex": "Laki-laki", "umur": 72, "alasan": "8 - Selain alasan di atas", "bobot": 1855.0}, {"id": 198205, "klas": "Kota", "sex": "Laki-laki", "umur": 67, "alasan": "7 - Tidak mampu bekerja", "bobot": 1568.0}, {"id": 201939, "klas": "Desa", "sex": "Perempuan", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 981.0}, {"id": 202891, "klas": "Kota", "sex": "Laki-laki", "umur": 55, "alasan": "7 - Tidak mampu bekerja", "bobot": 1155.0}, {"id": 203491, "klas": "Kota", "sex": "Laki-laki", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 626.0}, {"id": 205052, "klas": "Desa", "sex": "Perempuan", "umur": 75, "alasan": "7 - Tidak mampu bekerja", "bobot": 577.0}, {"id": 207500, "klas": "Kota", "sex": "Laki-laki", "umur": 62, "alasan": "8 - Selain alasan di atas", "bobot": 1499.0}, {"id": 207966, "klas": "Kota", "sex": "Perempuan", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 2026.0}, {"id": 208233, "klas": "Kota", "sex": "Laki-laki", "umur": 65, "alasan": "7 - Tidak mampu bekerja", "bobot": 1847.0}, {"id": 208235, "klas": "Kota", "sex": "Perempuan", "umur": 85, "alasan": "7 - Tidak mampu bekerja", "bobot": 2561.0}, {"id": 209167, "klas": "Desa", "sex": "Laki-laki", "umur": 25, "alasan": "8 - Selain alasan di atas", "bobot": 1180.0}, {"id": 209904, "klas": "Kota", "sex": "Perempuan", "umur": 85, "alasan": "7 - Tidak mampu bekerja", "bobot": 1888.0}, {"id": 213443, "klas": "Kota", "sex": "Perempuan", "umur": 87, "alasan": "7 - Tidak mampu bekerja", "bobot": 743.0}, {"id": 215298, "klas": "Kota", "sex": "Laki-laki", "umur": 63, "alasan": "7 - Tidak mampu bekerja", "bobot": 770.0}, {"id": 218336, "klas": "Kota", "sex": "Laki-laki", "umur": 34, "alasan": "7 - Tidak mampu bekerja", "bobot": 1154.0}, {"id": 219731, "klas": "Desa", "sex": "Perempuan", "umur": 80, "alasan": "7 - Tidak mampu bekerja", "bobot": 628.0}, {"id": 219908, "klas": "Kota", "sex": "Perempuan", "umur": 80, "alasan": "7 - Tidak mampu bekerja", "bobot": 1346.0}, {"id": 222245, "klas": "Kota", "sex": "Laki-laki", "umur": 81, "alasan": "7 - Tidak mampu bekerja", "bobot": 558.0}, {"id": 222312, "klas": "Desa", "sex": "Perempuan", "umur": 81, "alasan": "7 - Tidak mampu bekerja", "bobot": 716.0}, {"id": 222828, "klas": "Kota", "sex": "Perempuan", "umur": 76, "alasan": "7 - Tidak mampu bekerja", "bobot": 788.0}, {"id": 223895, "klas": "Kota", "sex": "Perempuan", "umur": 76, "alasan": "8 - Selain alasan di atas", "bobot": 411.0}, {"id": 224922, "klas": "Desa", "sex": "Perempuan", "umur": 32, "alasan": "8 - Selain alasan di atas", "bobot": 898.0}, {"id": 225665, "klas": "Kota", "sex": "Laki-laki", "umur": 66, "alasan": "8 - Selain alasan di atas", "bobot": 490.0}, {"id": 226543, "klas": "Desa", "sex": "Laki-laki", "umur": 19, "alasan": "8 - Selain alasan di atas", "bobot": 954.0}, {"id": 227098, "klas": "Kota", "sex": "Laki-laki", "umur": 74, "alasan": "7 - Tidak mampu bekerja", "bobot": 926.0}, {"id": 227982, "klas": "Kota", "sex": "Laki-laki", "umur": 88, "alasan": "7 - Tidak mampu bekerja", "bobot": 282.0}, {"id": 228284, "klas": "Kota", "sex": "Perempuan", "umur": 76, "alasan": "7 - Tidak mampu bekerja", "bobot": 547.0}, {"id": 233852, "klas": "Kota", "sex": "Perempuan", "umur": 82, "alasan": "7 - Tidak mampu bekerja", "bobot": 1401.0}, {"id": 234076, "klas": "Kota", "sex": "Laki-laki", "umur": 83, "alasan": "7 - Tidak mampu bekerja", "bobot": 1394.0}, {"id": 235673, "klas": "Desa", "sex": "Perempuan", "umur": 84, "alasan": "7 - Tidak mampu bekerja", "bobot": 750.0}, {"id": 238578, "klas": "Desa", "sex": "Laki-laki", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 604.0}, {"id": 241239, "klas": "Desa", "sex": "Perempuan", "umur": 73, "alasan": "7 - Tidak mampu bekerja", "bobot": 604.0}, {"id": 241297, "klas": "Kota", "sex": "Perempuan", "umur": 68, "alasan": "7 - Tidak mampu bekerja", "bobot": 1211.0}, {"id": 242063, "klas": "Desa", "sex": "Perempuan", "umur": 90, "alasan": "7 - Tidak mampu bekerja", "bobot": 620.0}, {"id": 242091, "klas": "Desa", "sex": "Perempuan", "umur": 51, "alasan": "7 - Tidak mampu bekerja", "bobot": 480.0}, {"id": 242094, "klas": "Desa", "sex": "Perempuan", "umur": 77, "alasan": "7 - Tidak mampu bekerja", "bobot": 628.0}, {"id": 245933, "klas": "Desa", "sex": "Perempuan", "umur": 25, "alasan": "8 - Selain alasan di atas", "bobot": 1367.0}, {"id": 245999, "klas": "Desa", "sex": "Perempuan", "umur": 71, "alasan": "7 - Tidak mampu bekerja", "bobot": 461.0}, {"id": 246522, "klas": "Desa", "sex": "Laki-laki", "umur": 59, "alasan": "8 - Selain alasan di atas", "bobot": 127.0}, {"id": 246523, "klas": "Desa", "sex": "Perempuan", "umur": 59, "alasan": "8 - Selain alasan di atas", "bobot": 202.0}, {"id": 247067, "klas": "Kota", "sex": "Perempuan", "umur": 83, "alasan": "7 - Tidak mampu bekerja", "bobot": 1667.0}, {"id": 247481, "klas": "Desa", "sex": "Perempuan", "umur": 84, "alasan": "7 - Tidak mampu bekerja", "bobot": 860.0}, {"id": 249496, "klas": "Kota", "sex": "Perempuan", "umur": 65, "alasan": "8 - Selain alasan di atas", "bobot": 864.0}, {"id": 251265, "klas": "Kota", "sex": "Laki-laki", "umur": 79, "alasan": "7 - Tidak mampu bekerja", "bobot": 1362.0}, {"id": 251378, "klas": "Desa", "sex": "Perempuan", "umur": 70, "alasan": "7 - Tidak mampu bekerja", "bobot": 380.0}];
+const selectedIds = new Set();
+
+const poolListBody = document.getElementById("poolListBody");
+const searchId = document.getElementById("searchId");
+const filterKlas = document.getElementById("filterKlas");
+const filterSex = document.getElementById("filterSex");
+const selectionSummary = document.getElementById("selectionSummary");
+const previewBox = document.getElementById("previewBox");
+const previewTable = document.getElementById("previewTable");
+
+function filteredList(){
+  const q = searchId.value.trim();
+  const k = filterKlas.value;
+  const s = filterSex.value;
+  return poolList.filter(r => {
+    if(q && String(r.id).indexOf(q) === -1) return false;
+    if(k && r.klas !== k) return false;
+    if(s && r.sex !== s) return false;
+    return true;
+  });
+}
+
+function renderPoolList(){
+  const rows = filteredList();
+  poolListBody.innerHTML = rows.map(r => `
+    <tr>
+      <td><input type="checkbox" data-id="${r.id}" ${selectedIds.has(r.id) ? "checked" : ""}></td>
+      <td>${r.id}</td>
+      <td>${r.klas}</td>
+      <td>${r.sex}</td>
+      <td class="num">${r.umur}</td>
+      <td>${r.alasan}</td>
+      <td class="num">${r.bobot.toLocaleString("id-ID")}</td>
+    </tr>
+  `).join("");
+
+  poolListBody.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const id = parseInt(cb.dataset.id);
+      if(cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+      renderSummary();
+    });
+  });
+  renderSummary();
+}
+
+function renderSummary(){
+  const chosen = poolList.filter(r => selectedIds.has(r.id));
+  const totalW = chosen.reduce((s,r)=>s+r.bobot,0);
+  const kota = chosen.filter(r=>r.klas==="Kota").length;
+  const desa = chosen.filter(r=>r.klas==="Desa").length;
+  const laki = chosen.filter(r=>r.sex==="Laki-laki").length;
+  const perempuan = chosen.filter(r=>r.sex==="Perempuan").length;
+
+  selectionSummary.innerHTML = `Terpilih: <b>${chosen.length}</b> orang (dari ${poolList.length}) ·
+    Kota: ${kota}, Desa: ${desa} · Laki-laki: ${laki}, Perempuan: ${perempuan} ·
+    Total bobot: ${totalW.toLocaleString("id-ID")}`;
+
+  document.getElementById("downloadHint").textContent = chosen.length > 0
+    ? chosen.length + " baris siap diunduh"
+    : "belum ada yang dipilih";
+
+  if(chosen.length > 0){
+    previewBox.style.display = "block";
+    previewTable.querySelector("thead").innerHTML =
+      "<tr><th>ID</th><th>Kota/Desa</th><th>Jenis Kelamin</th><th class='num'>Umur</th><th>Alasan</th><th class='num'>Bobot</th></tr>";
+    previewTable.querySelector("tbody").innerHTML = chosen.map(r => `
+      <tr><td>${r.id}</td><td>${r.klas}</td><td>${r.sex}</td><td class="num">${r.umur}</td><td>${r.alasan}</td><td class="num">${r.bobot}</td></tr>
+    `).join("");
+  } else {
+    previewBox.style.display = "none";
+  }
+}
+
+searchId.addEventListener("input", renderPoolList);
+filterKlas.addEventListener("change", renderPoolList);
+filterSex.addEventListener("change", renderPoolList);
+
+document.getElementById("selectAllBtn").addEventListener("click", () => {
+  filteredList().forEach(r => selectedIds.add(r.id));
+  renderPoolList();
+});
+document.getElementById("clearSelBtn").addEventListener("click", () => {
+  selectedIds.clear();
+  renderPoolList();
+});
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  const chosen = poolList.filter(r => selectedIds.has(r.id));
+  if(chosen.length === 0){ alert("Belum ada ID yang dipilih."); return; }
+  const header = "id,klas,jenis_kelamin,umur,alasan_srh,bobot\n";
+  const rows = chosen.map(r => [r.id, r.klas, r.sex, r.umur, `"${r.alasan}"`, r.bobot].join(",")).join("\n");
+  const csv = header + rows;
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "potensi_terpilih.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+renderPoolList();
+</script>
+</body>
+</html>
